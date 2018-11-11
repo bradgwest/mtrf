@@ -1,2 +1,13 @@
+#-- VENV --#
+---
 env/
+
+#-- SYSTEM/IDE GENERATED --#
 .idea/
+
+#-- DATA --#
+---
+data/
+
+#-- EXCEPTIONS --#
+---
