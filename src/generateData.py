@@ -8,14 +8,8 @@ DESCRIPTION: Functionality for simulating data for testing random forests with
 
 import numpy as np
 from sklearn.datasets import make_classification
+import math
 import random
-
-
-N_SAMPLES = [100, 1000, 10000]
-N_CLASSES = [(3, 1), (5, 1), (7, 1)]
-N_FEATURES = [12]
-N_INFO = [(0, 0, 0), (3, 1, 0), (4, 3, 1), (6, 4, 2)]
-N_PER = 2
 
 
 def generate_data(n_samples,
@@ -23,6 +17,7 @@ def generate_data(n_samples,
                   n_features,
                   n_info,
                   n_per,
+                  split=0.8,
                   use_seed=True):
     """
     Generate data for testing metamorphic relations
@@ -38,6 +33,7 @@ def generate_data(n_samples,
       informative predictors, second element is the number of repeated predictors.
       Third element is the number of redundant predictors.
     :param n_per: int, number of repeated datasets at each combination.
+    :param split: number, the train split
     :param use_seed: Boolean, should random seeds be used for the generation?
       Each dataset will get it's own seed
     :return: list of dictionaries, with data and metadata about the parameters
@@ -51,7 +47,8 @@ def generate_data(n_samples,
     else:
         seeds = random.sample(range(1, tot*1000), tot)
 
-    dsets = [dict(data=None, config=dict()) for _ in range(0, tot)]
+    dsets = [dict(data=dict(), config=dict()) for _ in range(0, tot)]
+    full = [None for _ in range(0, tot)]
     j = 0
 
     for x in n_samples:
@@ -60,21 +57,24 @@ def generate_data(n_samples,
                 for i, r, s in n_info:
                     for rep in range(0, n_per):
                         d = dsets[j]
-                        # make_classification cannot generate uninformative data with multiple classes
                         if i == 0:
-                            d["data"] = make_uninformative_classifier(n_samples=x,
-                                                                      n_features=m,
-                                                                      n_classes=k,
-                                                                      random_state=seeds[j])
+                            # make_classification cannot generate uninformative data with multiple classes
+                            full[j] = make_uninformative_classifier(n_samples=x,
+                                                                    n_features=m,
+                                                                    n_classes=k,
+                                                                    random_state=seeds[j])
                         else:
-                            d["data"] = make_classification(n_samples=x,
-                                                            n_features=m,
-                                                            n_informative=i,
-                                                            n_redundant=r,
-                                                            n_repeated=s,
-                                                            n_classes=k,
-                                                            n_clusters_per_class=c,
-                                                            random_state=seeds[j])
+                            full[j] = make_classification(n_samples=x, n_features=m,
+                                                          n_informative=i,
+                                                          n_redundant=r,
+                                                          n_repeated=s,
+                                                          n_classes=k,
+                                                          n_clusters_per_class=c,
+                                                          random_state=seeds[j])
+                        d["data"]["train"] = (full[j][0][0:math.floor(split * x)],
+                                              full[j][1][0:math.floor(split * x)])
+                        d["data"]["test"] = (full[j][0][math.floor(split * x):],
+                                             full[j][1][math.floor(split * x):])
                         d["config"]["n_samples"] = x
                         d["config"]["n_features"] = m
                         d["config"]["n_informative"] = i
@@ -104,6 +104,6 @@ def make_uninformative_classifier(n_samples, n_features, n_classes, random_state
     np.random.seed(random_state)
     random.seed(random_state)
     # Generate data
-    X = [np.random.normal(size=n_samples) for _ in range(0, n_features)]
+    X = [np.random.normal(size=n_features) for _ in range(0, n_samples)]
     y = [random.randrange(0, n_classes) for _ in range(0, n_samples)]
     return X, y
