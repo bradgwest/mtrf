@@ -6,8 +6,8 @@ DESCRIPTION: Entry point for running metamorphic and mutation testing on Random
   Forest implementations.
 """
 
-from generateData import generate_data
-from MetamorphicTester import *
+from make_data import make_data
+from mt import *
 
 
 # Dataset Parameters
@@ -30,7 +30,7 @@ CLASSIFIER_PARAMS = dict(
 
 
 def main():
-    data = generate_data(N_SAMPLES, N_CLASSES, N_FEATURES, N_INFO, N_PER, use_seed=True)
+    data = make_data(N_SAMPLES, N_CLASSES, N_FEATURES, N_INFO, N_PER, use_seed=True)
     data = [data[0]]  # delete me
     results = run_mt(data)
     print("made here")
@@ -56,10 +56,6 @@ def run_mt(data):
 
 
     return results
-
-
-def compare_predictions():
-    pass
 
 
 if __name__ == "__main__":

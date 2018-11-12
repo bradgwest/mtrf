@@ -12,13 +12,13 @@ import math
 import random
 
 
-def generate_data(n_samples,
-                  n_classes,
-                  n_features,
-                  n_info,
-                  n_per,
-                  split=0.8,
-                  use_seed=True):
+def make_data(n_samples,
+              n_classes,
+              n_features,
+              n_info,
+              n_per,
+              split=0.8,
+              use_seed=True):
     """
     Generate data for testing metamorphic relations
 
