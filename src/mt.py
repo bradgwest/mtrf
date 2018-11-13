@@ -9,6 +9,7 @@ from random import uniform, sample
 import copy
 from sklearn.ensemble import RandomForestClassifier
 
+# TODO Add num predictions
 
 class MetamorphicTester:
 
@@ -37,6 +38,7 @@ class MetamorphicTester:
         self.data_train_primary = data["data"]["train"]
 
         self.metadata = data["config"]
+        # TODO Why predictions not transfer
         self.results = dict(n_diff=None,
                             predictions=dict(primary=self.predict_primary,
                                              follow_up=self.predict_followup),
@@ -118,7 +120,8 @@ class MTLinearTransform(MetamorphicTester):
         X = follow_up[0]
         for row in X:
             for i in range(0, len(row)):
-                row[i] = linear_eq(row[i], m, b)
+                if i in cols_to_transform:
+                    row[i] = linear_eq(row[i], m, b)
         return follow_up
 
     def get_transformation_cols(self, n_transform=2):
@@ -128,9 +131,9 @@ class MTLinearTransform(MetamorphicTester):
         :param n_transform: int, the number of columns to transform
         :return:
         """
-        if n_transform > len(self.data_test_primary):
+        if n_transform > len(self.data_test_primary[0][0]):
             old = n_transform
-            transformed = len(self.data_test_primary)
+            transformed = len(self.data_test_primary[0][0])
             print("Number of columns to transform is greater than columns in "
                   "dataset. Changing parameter from {0} to {1}"
                   .format(old, transformed))
