@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.datasets import make_classification
 import math
 import random
+import logging
 
 
 def make_data(n_samples,
@@ -41,6 +42,7 @@ def make_data(n_samples,
     """
     # Total number of datasets
     tot = len(n_samples) * len(n_classes) * len(n_features) * len(n_info) * n_per
+    logging.info("Generating {} datasets".format(tot))
 
     if use_seed:
         seeds = [i for i in range(1, tot + 1)]
@@ -58,23 +60,27 @@ def make_data(n_samples,
                     for rep in range(0, n_per):
                         d = dsets[j]
                         if i == 0:
-                            # make_classification cannot generate uninformative data with multiple classes
-                            full[j] = make_uninformative_classifier(n_samples=x,
-                                                                    n_features=m,
-                                                                    n_classes=k,
-                                                                    random_state=seeds[j])
+                            full[j] = make_uninformative_classifier(
+                                n_samples=x,
+                                n_features=m,
+                                n_classes=k,
+                                random_state=seeds[j])
                         else:
-                            full[j] = make_classification(n_samples=x, n_features=m,
-                                                          n_informative=i,
-                                                          n_redundant=r,
-                                                          n_repeated=s,
-                                                          n_classes=k,
-                                                          n_clusters_per_class=c,
-                                                          random_state=seeds[j])
-                        d["data"]["train"] = (full[j][0][0:math.floor(split * x)],
-                                              full[j][1][0:math.floor(split * x)])
-                        d["data"]["test"] = (full[j][0][math.floor(split * x):],
-                                             full[j][1][math.floor(split * x):])
+                            full[j] = make_classification(
+                                n_samples=x,
+                                n_features=m,
+                                n_informative=i,
+                                n_redundant=r,
+                                n_repeated=s,
+                                n_classes=k,
+                                n_clusters_per_class=c,
+                                random_state=seeds[j])
+                        d["data"]["train"] = (
+                            full[j][0][0:math.floor(split * x)],
+                            full[j][1][0:math.floor(split * x)])
+                        d["data"]["test"] = (
+                            full[j][0][math.floor(split * x):],
+                            full[j][1][math.floor(split * x):])
                         d["config"]["n_samples"] = x
                         d["config"]["n_features"] = m
                         d["config"]["n_informative"] = i
@@ -87,9 +93,12 @@ def make_data(n_samples,
     return dsets
 
 
-def make_uninformative_classifier(n_samples, n_features, n_classes, random_state=23):
+def make_uninformative_classifier(n_samples,
+                                  n_features,
+                                  n_classes,
+                                  random_state=23):
     """
-    Generate uninformative data
+    Generate uninformative data (sklearn.dataset.make_classification cannot do this)
 
     :param n_samples: int, the number of samples
     :param n_features: int, the number of features, all of which will be uninformative
@@ -104,6 +113,6 @@ def make_uninformative_classifier(n_samples, n_features, n_classes, random_state
     np.random.seed(random_state)
     random.seed(random_state)
     # Generate data
-    X = [np.random.normal(size=n_features) for _ in range(0, n_samples)]
+    x = [np.random.normal(size=n_features) for _ in range(0, n_samples)]
     y = [random.randrange(0, n_classes) for _ in range(0, n_samples)]
-    return X, y
+    return x, y
