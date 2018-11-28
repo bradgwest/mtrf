@@ -5,16 +5,17 @@ CREATED ON: 2018-11-25
 DESCRIPTION: Unit testing for metamorphic relations for testing sklearn
   Random Forest Classifier
 """
+import copy
+import logging
+from random import uniform
+import unittest
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 
 from make_data import make_data
 import mr
-import unittest
-from sklearn.ensemble import RandomForestClassifier
-from random import uniform
-import copy
-import pandas as pd
-import numpy as np
-import logging
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -27,6 +28,13 @@ N_CLASSES = [(3, 1), (5, 1), (7, 1)]
 N_FEATURES = [12]
 N_INFO = [(0, 0, 0), (3, 1, 0), (4, 3, 1), (6, 4, 2)]
 N_PER = 2
+
+# # TEST PARAMETERS
+# N_SAMPLES = [100]
+# N_CLASSES = [(3, 1)]
+# N_FEATURES = [12]
+# N_INFO = [(0, 0, 0)]
+# N_PER = 2
 
 
 # Classifier Parameters
@@ -44,6 +52,9 @@ CLASSIFIER_PARAMS = dict(
 DF_COLS = ["n_samples", "n_features", "n_informative", "n_redundant",
           "n_repeated", "n_classes", "n_clusters_per_class", "seed",
            "mr", "n_diff"]
+
+# Create initial dataframe
+pd.DataFrame([DF_COLS]).to_csv(OUT, index=False, header=False)
 
 
 class RFCTester(unittest.TestCase):
@@ -104,14 +115,15 @@ class RFCTester(unittest.TestCase):
                      "classifiers")
 
     def tearDown(self):
+        "Writes data to a dataframe"
         df = pd.DataFrame(self.results, columns=DF_COLS, dtype=np.int64)
-        df.to_csv(OUT, index=False)
+        with open(OUT, "a") as f:
+            df.to_csv(f, index=False, header=False)
         logging.info("Wrote data to {}".format(OUT))
-
 
     def test_mr1(self):
         """
-        MR1 -- Affine transformation
+        MR 1 -- Linear transformation
         """
         for i in range(self.n):
             results = copy.copy(self.metadata[i])
@@ -136,10 +148,8 @@ class RFCTester(unittest.TestCase):
                 test_followup[0]
             )
             # Get the results
-            n_diff = 0
-            for p, f in zip(self.primary_predictions[i], follow_up_predictions):
-                if p != f:
-                    n_diff += 1
+            n_diff = mr.compare_results(self.primary_predictions[i],
+                                        follow_up_predictions)
             logging.info("Number different for run {} of MR 1 was {}"
                          .format(i, n_diff))
             results["n_diff"] = n_diff
@@ -148,3 +158,43 @@ class RFCTester(unittest.TestCase):
                 self.assertEqual(n_diff, 0)
             # Add results to self results
             self.results.append(copy.copy(results))
+
+    def test_mr2(self):
+        """
+        MR 2 -- Addition of uninformative variable
+        """
+        for i in range(self.n):
+            results = copy.copy(self.metadata[i])
+            # Add a completely uninformative variable to the sets
+            uninformative_value = 0
+            train_followup = mr.mr_add_uninformative(self.train_primary[i],
+                                                     uninformative_value)
+            test_followup = mr.mr_add_uninformative(self.test_primary[i],
+                                                   uninformative_value)
+            followup_classifier = copy.deepcopy(self.primary_classifier[i])
+            followup_classifier.fit(X=train_followup[0], y=train_followup[1])
+            follow_up_predictions = followup_classifier.predict(
+                test_followup[0]
+            )
+            n_diff = mr.compare_results(self.primary_predictions[i],
+                                        follow_up_predictions)
+            logging.info("Number different for run {} of MR 2 was {}"
+                         .format(i, n_diff))
+            results["n_diff"] = n_diff
+            results["mr"] = 2
+            with self.subTest(i=i):
+                self.assertEqual(n_diff, 0)
+            # Add results to self results
+            self.results.append(copy.copy(results))
+
+    # def test_mr3(self):
+    #     """
+    #     MR 3 -- Modify order of predictor names
+    #     """
+    #     pass
+    #
+    # def test_mr4(self):
+    #     """
+    #     MR 4 -- Increase size of dataset
+    #     """
+    #     pass

@@ -2,12 +2,36 @@
 AUTHOR: Brad West
 CREATED ON: 2018-11-25
 ---
-DESCRIPTION: Metamorphic relations for testing random forest
-  implementations
+DESCRIPTION: Helper functions for implementing metamorphic relations
 """
 
-from random import uniform, sample
 import copy
+from random import uniform, sample
+
+import numpy as np
+
+
+def mr_add_uninformative(data, uninformative_value=uniform(-1, 1)):
+    """
+    Adds a completely uninformative variable to a dataset
+
+    :param data: 2-tuple, the data where the first element is the X
+      data and the second is the y (labels)
+    :param uninformative_value: int, the value to add to the dataframe
+    :return: the data with an added variable
+    """
+    new_col = np.array([np.array([uninformative_value])
+                        for _ in range(len(data[0]))])
+    x = np.append(data[0], new_col, 1)  # append column to the end
+    return x, data[1]
+
+
+def compare_results(primary, followup):
+    n_diff = 0
+    for p, f in zip(primary, followup):
+        if p != f:
+            n_diff += 1
+    return n_diff
 
 
 def get_transformation_cols(data, n_transform=2):

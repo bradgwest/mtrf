@@ -6,11 +6,12 @@ DESCRIPTION: Functionality for simulating data for testing random forests with
   metamorphic relations.
 """
 
-import numpy as np
-from sklearn.datasets import make_classification
+import logging
 import math
 import random
-import logging
+
+import numpy as np
+from sklearn.datasets import make_classification
 
 
 def make_data(n_samples,
