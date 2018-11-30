@@ -7,7 +7,7 @@ DESCRIPTION: Unit testing for metamorphic relations for testing sklearn
 """
 import copy
 import logging
-from random import uniform
+from random import sample, uniform
 import unittest
 
 import numpy as np
@@ -33,7 +33,7 @@ N_PER = 2
 # N_SAMPLES = [100]
 # N_CLASSES = [(3, 1)]
 # N_FEATURES = [12]
-# N_INFO = [(0, 0, 0)]
+# N_INFO = [(0, 0, 0), (3, 1, 0)]
 # N_PER = 2
 
 
@@ -117,6 +117,7 @@ class RFCTester(unittest.TestCase):
     def tearDown(self):
         "Writes data to a dataframe"
         df = pd.DataFrame(self.results, columns=DF_COLS, dtype=np.int64)
+        # Append to dataframe
         with open(OUT, "a") as f:
             df.to_csv(f, index=False, header=False)
         logging.info("Wrote data to {}".format(OUT))
@@ -187,14 +188,59 @@ class RFCTester(unittest.TestCase):
             # Add results to self results
             self.results.append(copy.copy(results))
 
-    # def test_mr3(self):
-    #     """
-    #     MR 3 -- Modify order of predictor names
-    #     """
-    #     pass
-    #
-    # def test_mr4(self):
-    #     """
-    #     MR 4 -- Increase size of dataset
-    #     """
-    #     pass
+    def test_mr3(self):
+        """
+        MR 3 -- Modify order of predictor names
+        """
+        for i in range(self.n):
+            results = copy.copy(self.metadata[i])
+            n_features = len(self.train_primary[i][0][0])
+            new_order = sample(range(n_features), n_features)
+            train_followup = mr.mr_reorder_predictors(self.train_primary[i],
+                                                      new_order)
+            test_followup = mr.mr_reorder_predictors(self.test_primary[i],
+                                                     new_order)
+            # Create a follow-up classifier, fit it, and make predictions
+            followup_classifier = copy.deepcopy(self.primary_classifier[i])
+            followup_classifier.fit(X=train_followup[0], y=train_followup[1])
+            follow_up_predictions = followup_classifier.predict(
+                test_followup[0]
+            )
+            # Get the results
+            n_diff = mr.compare_results(self.primary_predictions[i],
+                                        follow_up_predictions)
+            logging.info("Number different for run {} of MR 3 was {}"
+                         .format(i, n_diff))
+            results["n_diff"] = n_diff
+            results["mr"] = 3
+            with self.subTest(i=i):
+                self.assertEqual(n_diff, 0)
+            # Add results to self results
+            self.results.append(copy.copy(results))
+
+    def test_mr4(self):
+        """
+        MR 4 -- Increase size of dataset
+        """
+        for i in range(self.n):
+            results = copy.copy(self.metadata[i])
+            train_followup = mr.mr_double_dataset(self.train_primary[i])
+            # Test dataset does not get doubled
+            test_followup = self.test_primary[i]
+            # Create a follow-up classifier, fit it, and make predictions
+            followup_classifier = copy.deepcopy(self.primary_classifier[i])
+            followup_classifier.fit(X=train_followup[0], y=train_followup[1])
+            follow_up_predictions = followup_classifier.predict(
+                test_followup[0]
+            )
+            # Get the results
+            n_diff = mr.compare_results(self.primary_predictions[i],
+                                        follow_up_predictions)
+            logging.info("Number different for run {} of MR 4 was {}"
+                         .format(i, n_diff))
+            results["n_diff"] = n_diff
+            results["mr"] = 4
+            with self.subTest(i=i):
+                self.assertEqual(n_diff, 0)
+            # Add results to self results
+            self.results.append(copy.copy(results))

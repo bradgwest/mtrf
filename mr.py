@@ -9,6 +9,7 @@ import copy
 from random import uniform, sample
 
 import numpy as np
+import pandas as pd
 
 
 def mr_add_uninformative(data, uninformative_value=uniform(-1, 1)):
@@ -87,3 +88,41 @@ def mr_linear_transform(data,
             if i in cols_to_transform:
                 row[i] = linear_eq(row[i], m, b)
     return follow_up
+
+
+def mr_reorder_predictors(data, new_order):
+    """
+    Re-order predictors of a data frame
+
+    :param 2-tuple data: the X, y of a dataset
+    :param list new_order: the new order for the columns
+    :return: copy of the data with reordered columns
+    """
+    assert len(data[0][0]) == len(new_order)
+    if isinstance(data[0], list):
+        x_int = np.array(data[0])
+        x = x_int[:, new_order]
+    else:
+        x = data[0][:,new_order]
+    return x, data[1]
+
+
+def mr_double_dataset(data):
+    """
+    Double the dataset size
+
+    :param 2-tuple data:
+    :return:
+    """
+    if isinstance(data[0], list):
+        data[0].extend(data[0])
+        x = copy.deepcopy(data[0])
+        data[1].extend(data[1])
+        y = copy.deepcopy(data[1])
+    elif isinstance(data[0], np.ndarray):
+        x = np.append(data[0], data[0], axis = 0)
+        y = np.append(data[1], data[1])
+    else:
+        x = data[0]
+        y = data[1]
+    return x, y
