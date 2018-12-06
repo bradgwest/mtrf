@@ -9,10 +9,9 @@ import copy
 from random import uniform, sample
 
 import numpy as np
-import pandas as pd
 
 
-def mr_add_uninformative(data, uninformative_value=uniform(-1, 1)):
+def mr_add_uninformative(data, other_args={}):
     """
     Adds a completely uninformative variable to a dataset
 
@@ -21,6 +20,10 @@ def mr_add_uninformative(data, uninformative_value=uniform(-1, 1)):
     :param uninformative_value: int, the value to add to the dataframe
     :return: the data with an added variable
     """
+    if not "uninformative_value" in other_args:
+        uninformative_value = uniform(-1, 1)
+    else:
+        uninformative_value = other_args["uninformative_value"]
     new_col = np.array([np.array([uninformative_value])
                         for _ in range(len(data[0]))])
     x = np.append(data[0], new_col, 1)  # append column to the end
@@ -35,14 +38,19 @@ def compare_results(primary, followup):
     return n_diff
 
 
-def get_transformation_cols(data, n_transform=2):
+def get_transformation_cols(data, other_args={}):
     """
     Returns a list of columns to transform
 
     :param data: 2d array, the data to sample from
-    :param n_transform: int, the number of columns to transform
+    :param other_args: Dictionary of other arguments
     :return:
     """
+    if not "n_transform" in other_args:
+        n_transform = 2
+    else:
+        n_transform = other_args["n_transform"]
+
     if n_transform > len(data[0]):
         old = n_transform
         transformed = len(data[0])
@@ -53,9 +61,7 @@ def get_transformation_cols(data, n_transform=2):
 
 
 def mr_linear_transform(data,
-                        cols_to_transform,
-                        m=uniform(-1, 1),
-                        b=uniform(-1, 1)):
+                        other_args={}):
     """
     Apply linear transformation of form: mx + b
 
@@ -63,11 +69,19 @@ def mr_linear_transform(data,
     should remain the same.
 
     :param data: 2d array, the data to manipulate
-    :param cols_to_transform: 1d array, the column indices to transform
-    :param m: int, "m" in the equation y = mx + b
-    :param b: int, "b" in the equation y = mx + b
+    :param other_args:
     :return: primary and follow-up data
     """
+
+    cols_to_transform = other_args["cols_to_transform"]
+    if not "m" in other_args:
+        m = uniform(1,1)
+    else:
+        m = other_args["m"]
+    if not "b" in other_args:
+        b = uniform(1,1)
+    else:
+        b = other_args["b"]
 
     def linear_eq(x, m, b):
         return m * x + b
@@ -90,14 +104,14 @@ def mr_linear_transform(data,
     return follow_up
 
 
-def mr_reorder_predictors(data, new_order):
+def mr_reorder_predictors(data, other_args={}):
     """
     Re-order predictors of a data frame
 
     :param 2-tuple data: the X, y of a dataset
-    :param list new_order: the new order for the columns
     :return: copy of the data with reordered columns
     """
+    new_order = other_args["new_order"]
     assert len(data[0][0]) == len(new_order)
     if isinstance(data[0], list):
         x_int = np.array(data[0])
@@ -107,7 +121,7 @@ def mr_reorder_predictors(data, new_order):
     return x, data[1]
 
 
-def mr_double_dataset(data):
+def mr_double_dataset(data, other_args={}):
     """
     Double the dataset size
 
