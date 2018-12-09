@@ -19,7 +19,7 @@ option_list = list(
               help="directory to store images", metavar="character"),
   make_option(c("-i", "--input"), type="character", 
               default=paste0("~/drive/msu/fall2018/esof523/term_paper/mtrf/", 
-                             "data/initial_output.csv"), 
+                             "data/out.csv"), 
               help="input csv", metavar="character")) 
 
 opt_parser = OptionParser(option_list=option_list)
@@ -108,6 +108,19 @@ model2 <- glm(any_different~n_samples+n_classes, data=d2,
               family=binomial())
 anova(model2, model, test = "Chisq")
 
+model3 <- glm(any_different~n_samples+n_informative, data=d2,
+              family=binomial())
+anova(model3, model, test = "Chisq")
 # Moderate evidence that the odds of a failed follow-up test increase with
 # increasing sample size. No evidence that amount of information or number of
 # classes affect the odds of a failing follow-up test.
+
+## Test error
+
+tbl3 <- d %>% 
+  group_by(n_samples, n_informative) %>% 
+  summarise(`Mean Test Error` = mean(test_error)) %>% 
+  rename(`Num. Samples` = n_samples,
+         `Information` = n_informative)
+xtable::xtable(tbl3, caption = paste0(
+  "Mean test error for varying levels of information and number of samples"))
