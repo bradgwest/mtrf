@@ -54,7 +54,7 @@ CLASSIFIER_PARAMS = dict(
 # Columns of output dataframe
 DF_COLS = ["n_samples", "n_features", "n_informative", "n_redundant",
           "n_repeated", "n_classes", "n_clusters_per_class", "seed",
-           "mr", "n_diff"]
+           "mr", "n_diff", "test_error"]
 
 # Create initial dataframe
 pd.DataFrame([DF_COLS]).to_csv(OUT, index=False, header=False)
@@ -68,6 +68,14 @@ def print_results(initial, follow_up):
             break
     if not equal:
         print("Did not match")
+
+
+def get_test_error(pred, actual):
+    n_diff = 0
+    for i, f in zip(pred, actual):
+        if i != f:
+            n_diff += 1
+    return n_diff / len(pred)
 
 
 def run_mr(data, config, metrel, mr=None, **kwargs):
@@ -115,6 +123,9 @@ def run_mr(data, config, metrel, mr=None, **kwargs):
         print("Did Not Match. Number different: {} of {}"
               .format(num_diff, len(initial_predictions)))
 
+    test_error = get_test_error(initial_predictions, test_y)
+    print("test_error: {}".format(test_error))
+    results["test_error"] = test_error
     results["n_diff"] = num_diff
     return results, num_diff
 
@@ -132,7 +143,7 @@ def running_job_log(mr, idx):
 
 
 def write_results(results):
-    df = pd.DataFrame(results, columns=DF_COLS, dtype=np.int64)
+    df = pd.DataFrame(results, columns=DF_COLS)
     with open(OUT, "a") as f:
         df.to_csv(f, index=False, header=False)
     logging.info("Wrote data to {}".format(OUT))
